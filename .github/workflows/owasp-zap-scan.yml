@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Create ZAP config directory
+        run: mkdir -p zap_config
+
+      - name: Set up ZAP Baseline Scan
+        id: zap
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://www.shecodes.io/"
+          config: "zap_config/zap.yaml"  # Specify the writable directory within the workspace
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: zap-report
+          path: zap_report.html
