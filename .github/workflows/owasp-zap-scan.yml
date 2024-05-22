@@ -22,9 +22,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GIT_HUB_TOKEN }}
 
-      - name: Upload ZAP Report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-report
-          path: zap_report.html
