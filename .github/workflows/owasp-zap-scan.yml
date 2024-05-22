@@ -20,7 +20,7 @@ jobs:
           target: "https://www.shecodes.io/"
           fail_action: true  # Ensure the action fails if issues are found
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GIT_HUB_TOKEN }}
 
       - name: Upload ZAP Report
         if: always()
