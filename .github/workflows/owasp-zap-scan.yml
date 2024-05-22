@@ -4,20 +4,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write  # Ensure this is set if issues need to be created
+      pull-requests: write
 
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3
-
-      - name: Create ZAP config directory
-        run: mkdir -p zap_config
 
       - name: Set up ZAP Baseline Scan
         id: zap
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: "https://www.shecodes.io/"
-          config: "zap_config/zap.yaml"  # Specify the writable directory within the workspace
+          fail_action: true  # Ensure the action fails if issues are found
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
