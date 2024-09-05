@@ -1,24 +1,88 @@
-name: CI
-on:
-  push:
+name: Deploy Policy Pack
+ 
+on: push
+ 
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: 'Stack to deploy policy pack'
+        required: false
+        default: 'Creating Azure Policies'
+ 
+permissions:
+  id-token: write
+  contents: read
+ 
 jobs:
-  build:
+  Deploy_Policy_Pack:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write  # Ensure this is set if issues need to be created
-      pull-requests: write
-
     steps:
-      - name: Check out the repository
+      - name: Checkout Repo
         uses: actions/checkout@v3
-
-      - name: Set up ZAP Baseline Scan
-        id: zap
-        uses: zaproxy/action-baseline@v0.12.0
+ 
+      - name: Azure login
+        uses: azure/login@v2
         with:
-          target: "https://www.shecodes.io/"
-          fail_action: false  # Ensure the action fails if issues are found
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+ 
+      - name: Create or Update Azure Policies
+        uses: azure/manage-azure-policy@v0
+        with:      
+          paths:  |                  
+            policies/**
+ 
+      - name: Install Pulumi CLI
+        run: |
+          cd kente-policy
+          npm install @pulumi/pulumi@^3
+ 
+      - name: Run NPM install for dependencies
+        run: npm install
+ 
+      - name: Debug - Check Version
+        run: npm list @pulumi/pulumi
+ 
+      - name: Log in to Pulumi
+        run: |
+          cd /home/runner/work/kente-policy/kente-policy/
+          pulumi login
         env:
-          GITHUB_TOKEN: ${{ secrets.GIT_HUB_TOKEN }}
-
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        working-directory: /home/runner/work/kente-policy/kente-policy
+ 
+      - name: Set working directory
+        run: |
+          cd kente-policy
+          pwd
+ 
+      - name: Select Pulumi stack
+        run: pulumi stack select "kente-policy-dev"
+ 
+      - name: Preview the policy pack
+        run: |
+          pwd  
+          cd kente-policy
+          pulumi stack select pulumi-policy/kente-policy-dev
+          pulumi preview
+        env:
+          ARM_USE_OIDC: 'true'
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+ 
+      - name: Deploy the policy pack
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          pwd  
+          cd kente-policy
+          pulumi stack select mtn-kente-sws/pulumi-policy/kente-policy-dev
+          pulumi up --yes
+        env:
+          ARM_USE_OIDC: 'true'
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
