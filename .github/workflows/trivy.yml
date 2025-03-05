@@ -40,8 +40,9 @@ jobs:
           scan-type: 'fs'
           scanners: 'vuln,misconfig,secret,license'
           severity: 'HIGH,CRITICAL'
-          exit-code: 1
           format: 'table'
+          exit-code: 1
+         
           
       - name: Upload Trivy Scan Results as Artifact
         if: always()
