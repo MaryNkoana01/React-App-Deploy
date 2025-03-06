@@ -21,6 +21,9 @@ jobs:
       - name: Output Run ID
         run: echo ${{ github.run_id }}
 
+      - name: Test Docker
+        run: docker run hello-world
+
       - name: Build SonarQube image
         run: |
           # docker build -t crswsmkpdevsan1.azurecr.io/sonarqube-custom:${{ github.run_id }} 
